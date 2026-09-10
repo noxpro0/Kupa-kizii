@@ -449,7 +449,6 @@
         let currentTrack = null;
         let favorites = JSON.parse(localStorage.getItem('fav_tracks') || '[]');
 
-        // Default Featured Tracks
         const featuredTracks = [
             { id: "dQw4w9WgXcQ", title: "Never Gonna Give You Up", artist: "Rick Astley", cover: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" },
             { id: "kJQP7kiw5Fk", title: "Despacito", artist: "Luis Fonsi", cover: "https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg" },
@@ -477,7 +476,6 @@
             }
         }
 
-        // Initialize Home Tracks
         window.onload = function() {
             renderGrid('homeGrid', featuredTracks);
             renderFavorites();
@@ -526,7 +524,6 @@
             }
         }
 
-        // YouTube Search API
         async function handleSearch(event) {
             if (event.key !== 'Enter') return;
             const query = document.getElementById('searchInput').value;
@@ -557,7 +554,6 @@
             }
         }
 
-        // Navigation Tabs
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -571,7 +567,6 @@
             if (tabName === 'letter') items[3].classList.add('active');
         }
 
-        // Theme Toggle
         function toggleTheme() {
             document.body.classList.toggle('light-theme');
             const icon = document.getElementById('themeIcon');
@@ -582,7 +577,6 @@
             }
         }
 
-        // Favorites System
         function toggleFavorite() {
             if (!currentTrack) return;
             const index = favorites.findIndex(item => item.id === currentTrack.id);
@@ -611,7 +605,6 @@
             renderGrid('favoritesGrid', favorites);
         }
 
-        // Letter Functions
         function openLetter() {
             document.getElementById('letterModal').style.display = 'flex';
         }
