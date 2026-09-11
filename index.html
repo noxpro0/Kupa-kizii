@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>kupa kızı // müzik</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#57c9a3">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kupa Kızı">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -47,12 +55,6 @@ body{
   position:relative;
   transition:background-color .4s ease, color .4s ease;
   padding-bottom:88px;
-}
-body.playing-bg{ background-image:
-    linear-gradient(180deg, var(--tint-c-20), var(--tint-c-20)), var(--song-bg-img, none);
-  background-size:auto, cover;
-  background-position:center, center 25%;
-  background-repeat:no-repeat, no-repeat;
 }
 ::-webkit-scrollbar{width:10px;height:10px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -131,7 +133,8 @@ body.playing-bg{ background-image:
 .search-input{width:100%;padding:15px 46px 15px 18px;border-radius:18px;border:2px solid var(--line);background:var(--card);color:var(--text);font-family:var(--body);font-size:14px;font-weight:500;outline:none;transition:border-color .2s;}
 .search-input:focus{border-color:var(--a);}
 .search-input::placeholder{color:var(--mid);}
-.search-icon{position:absolute;right:17px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--mid);}
+.search-icon{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:17px;color:var(--mid);background:transparent;border:none;cursor:pointer;padding:8px;border-radius:50%;transition:background .15s;}
+.search-icon:hover{background:var(--tint-a-08);}
 
 /* ---------- şarkı grid ---------- */
 .song-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:13px;}
@@ -203,9 +206,35 @@ body.playing-bg{ background-image:
   .now-title{font-size:11.5px;}
   .brand{font-size:27px;}
 }
+@media(max-width:360px){
+  .tab-btn{font-size:11px;padding:9px 3px;}
+  .shell{padding:20px 12px 20px;}
+  .settings-panel{right:10px;width:calc(100vw - 20px);}
+}
+.settings-panel, .modal-box{ max-width:calc(100vw - 32px); }
+img{ max-width:100%; }
+
+/* ---------- açılış (loading) ekranı ---------- */
+.loading-screen{
+  position:fixed;inset:0;z-index:999;
+  background:linear-gradient(180deg,#eafaf5,#dcf3ef);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  transition:opacity .5s ease, visibility .5s ease;
+}
+.loading-screen.hide{opacity:0;visibility:hidden;pointer-events:none;}
+.loading-frog{font-size:60px;animation:loadingBounce 1s ease-in-out infinite;}
+@keyframes loadingBounce{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-22px) scale(1.08);}}
+.loading-hearts{font-size:20px;opacity:0.7;}
+.loading-text{font-family:'Fraunces',serif;font-weight:600;font-size:16px;color:#2f9c79;letter-spacing:.02em;}
 </style>
 </head>
 <body>
+
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-frog">🐸</div>
+  <div class="loading-hearts">💚 💙 💕</div>
+  <div class="loading-text">kupa kızı yükleniyor...</div>
+</div>
 
 <div class="deco-layer" id="decoLayer"></div>
 <div class="ambient-butterflies" id="ambientButterflies"></div>
@@ -245,8 +274,8 @@ body.playing-bg{ background-image:
   <!-- ================= TAB 0: ANASAYFA ================= -->
   <div class="tab-panel active" id="tab0">
     <div class="search-wrap">
-      <input type="text" class="search-input" id="searchInput" placeholder="Şarkı ara..." oninput="onSearchInput()">
-      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="searchInput" placeholder="Şarkı ara..." oninput="onSearchInput()" onkeydown="if(event.key==='Enter') triggerSearchNow();">
+      <button type="button" class="search-icon" onclick="triggerSearchNow()">🔍</button>
     </div>
 
     <div class="card" id="searchResultsCard" style="display:none;">
@@ -302,7 +331,7 @@ body.playing-bg{ background-image:
     </div>
 
     <div class="card" id="bgManageCard">
-      <div class="card-title">🖼️ Şu An Çalan Şarkının Arka Planı</div>
+      <div class="card-title">🖼️ Çalan Şarkının Kapak Fotoğrafı</div>
       <div class="bg-preview" id="bgPreview"><div class="now-tag" id="bgNowTag"></div></div>
       <label class="file-btn">📁 Dosya Seç<input type="file" accept="image/*" id="bgFileInput" onchange="onBgFileSelected(event)"></label>
       <button class="remove-btn" onclick="removeBgImage()">🗑️ Kaldır</button>
@@ -360,7 +389,7 @@ body.playing-bg{ background-image:
    (console.cloud.google.com -> proje oluştur -> "YouTube Data API v3"
    etkinleştir -> Kimlik Bilgisi Oluştur -> API Anahtarı)
    ================================================================== */
-const YOUTUBE_API_KEY = "AIzaSyAvaiMCTQ3IZJPxnEwxu4TrpdvU0_CKXBk";
+const YOUTUBE_API_KEY = "BURAYA_YOUTUBE_API_ANAHTARINI_YAPISTIR";
 const DEFAULT_BG = "the-kiss.jpg"; /* aynı klasörde durmalı */
 
 /* ==================================================================
@@ -431,7 +460,7 @@ function renderEnvelopes(){
       if(env.dataset.collected==='1') return;
       env.dataset.collected='1';
       const rect = env.getBoundingClientRect();
-      popHearts(rect.left+rect.width/2, rect.top+rect.height/2, false, true);
+      popHearts(rect.left+rect.width/2, rect.top+rect.height/2);
       playPop();
       env.classList.add('collected');
       collectedEnvelopes++;
@@ -441,9 +470,9 @@ function renderEnvelopes(){
     layer.appendChild(env);
   }
 }
-function popHearts(x,y,extra,tiny){
+function popHearts(x,y,extra){
   const hearts = ['💚','💙','💕','🩵','💖','💗'];
-  const count = extra?24:(tiny?1:10);
+  const count = extra?24:(3+Math.floor(Math.random()*2)); /* 3-4 kalp */
   for(let i=0;i<count;i++){
     const h=document.createElement('div');
     h.style.position='fixed'; h.style.pointerEvents='none'; h.style.zIndex=90;
@@ -510,7 +539,12 @@ window.onYouTubeIframeAPIReady = function(){
   });
 };
 loadYTApi();
-function onPlayerStateChange(e){ isPlaying = (e.data===1); updateNowBarUI(); }
+function onPlayerStateChange(e){
+  isPlaying = (e.data===1);
+  updateNowBarUI();
+  if('mediaSession' in navigator) navigator.mediaSession.playbackState = isPlaying ? 'playing':'paused';
+  if(e.data===0){ playNextSimilar(); } /* şarkı bitti -> otomatik benzer şarkıya geç */
+}
 function playSong(song){
   currentSong = song;
   if(!ytReady){ setTimeout(()=>playSong(song), 400); return; }
@@ -519,7 +553,7 @@ function playSong(song){
   addHistory(song);
   showNowBar();
   updateNowBarUI();
-  applyBackground();
+  updateMediaSession(song);
   renderTab2();
   renderAllSongLists();
 }
@@ -535,11 +569,41 @@ function onVolumeInput(v){
 }
 function showNowBar(){
   document.getElementById('nowBar').style.display='flex';
-  document.getElementById('nowThumb').src = `https://i.ytimg.com/vi/${currentSong.videoId}/mqdefault.jpg`;
+  document.getElementById('nowThumb').src = customBg || `https://i.ytimg.com/vi/${currentSong.videoId}/mqdefault.jpg`;
   document.getElementById('nowTitle').textContent = currentSong.title;
   document.getElementById('nowSub').textContent = currentSong.channel||'';
 }
 function updateNowBarUI(){ document.getElementById('nowPlayBtn').textContent = isPlaying ? '⏸' : '▶'; }
+
+/* ---- telefon kilit ekranı / bildirim kontrolleri: arka planda çalmaya devam etmesine yardımcı olur ---- */
+function updateMediaSession(song){
+  if(!('mediaSession' in navigator)) return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: song.title,
+    artist: song.channel || 'kupa kızı',
+    album: 'kupa kızı',
+    artwork: [{ src: customBg || `https://i.ytimg.com/vi/${song.videoId}/mqdefault.jpg`, sizes:'320x180', type:'image/jpeg' }]
+  });
+  navigator.mediaSession.setActionHandler('play', ()=>{ if(ytReady) ytPlayer.playVideo(); });
+  navigator.mediaSession.setActionHandler('pause', ()=>{ if(ytReady) ytPlayer.pauseVideo(); });
+  navigator.mediaSession.setActionHandler('nexttrack', ()=>playNextSimilar());
+}
+
+/* ---- şarkı bitince otomatik olarak benzer/aynı sanatçıdan bir şarkıya geç ---- */
+async function playNextSimilar(){
+  if(!currentSong) return;
+  const seedQuery = currentSong.channel || currentSong.title.split(' ').slice(0,3).join(' ');
+  try{
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=8&q=${encodeURIComponent(seedQuery)}&key=${YOUTUBE_API_KEY}`;
+    const data = await ytApiFetch(url);
+    const candidates = (data.items||[])
+      .map(it=>({ videoId:it.id.videoId, title:it.snippet.title, channel:it.snippet.channelTitle }))
+      .filter(s=>s.videoId !== currentSong.videoId);
+    if(candidates.length===0) return;
+    const pick = candidates[Math.floor(Math.random()*candidates.length)];
+    playSong(pick);
+  }catch(e){ /* API yoksa sessizce dur, kullanıcıya teknik hata gösterme */ }
+}
 
 window.addEventListener('keydown', (e)=>{
   const tag = document.activeElement.tagName;
@@ -613,6 +677,11 @@ function onSearchInput(){
   const q = document.getElementById('searchInput').value.trim();
   if(!q){ document.getElementById('searchResultsCard').style.display='none'; return; }
   searchTimer = setTimeout(()=>doSearch(q), 400);
+}
+function triggerSearchNow(){
+  clearTimeout(searchTimer);
+  const q = document.getElementById('searchInput').value.trim();
+  if(q) doSearch(q);
 }
 async function doSearch(q){
   const card = document.getElementById('searchResultsCard');
@@ -706,18 +775,14 @@ function goStartMusic(){ switchTab(0); }
 /* ==================================================================
    ARKA PLAN — sadece müzik başlayınca uygulanır
    ================================================================== */
-function applyBackground(){
-  if(!currentSong){ document.body.classList.remove('playing-bg'); document.body.style.removeProperty('--song-bg-img'); return; }
-  const img = customBg || `url('${DEFAULT_BG}')`;
-  document.body.style.setProperty('--song-bg-img', customBg ? `url('${customBg}')` : `url('${DEFAULT_BG}')`);
-  document.body.classList.add('playing-bg');
-}
+/* Site arka planı sabit temamız — burada değişmez. Seçilen fotoğraf sadece
+   alttaki mini oynatıcının kapak resmini (ve kilit ekranı kontrollerini) değiştirir. */
 function renderTab2(){
   const noMusic = document.getElementById('noMusicCard');
   const manage = document.getElementById('bgManageCard');
   if(!currentSong){ noMusic.style.display='block'; manage.style.display='none'; return; }
   noMusic.style.display='none'; manage.style.display='block';
-  const img = customBg || DEFAULT_BG;
+  const img = customBg || `https://i.ytimg.com/vi/${currentSong.videoId}/mqdefault.jpg`;
   document.getElementById('bgPreview').style.backgroundImage = `url('${img}')`;
   document.getElementById('bgNowTag').textContent = '🎵 ' + currentSong.title;
 }
@@ -728,14 +793,16 @@ function onBgFileSelected(e){
   reader.onload = function(ev){
     customBg = ev.target.result;
     localStorage.setItem('kk_bg_image', customBg);
-    applyBackground(); renderTab2();
+    renderTab2();
+    if(currentSong){ showNowBar(); updateMediaSession(currentSong); }
   };
   reader.readAsDataURL(file);
 }
 function removeBgImage(){
   customBg = null;
   localStorage.removeItem('kk_bg_image');
-  applyBackground(); renderTab2();
+  renderTab2();
+  if(currentSong){ showNowBar(); updateMediaSession(currentSong); }
 }
 
 /* ==================================================================
@@ -804,6 +871,18 @@ document.addEventListener('click', function(e){
   }
 });
 
+/* ---- nereye dokunursa dokunsun küçük kalpler çıksın ---- */
+document.addEventListener('click', function(e){
+  popHearts(e.clientX, e.clientY);
+});
+
+/* ---- PWA: uygulama gibi yüklenebilsin ---- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
 /* ==================================================================
    BAŞLAT
    ================================================================== */
@@ -811,6 +890,11 @@ renderDeco();
 renderAmbientButterflies();
 renderFrogs();
 renderEnvelopes();
+(function(){
+  const hide = ()=>document.getElementById('loadingScreen').classList.add('hide');
+  window.addEventListener('load', ()=>setTimeout(hide, 650));
+  setTimeout(hide, 2500); /* garanti kapanış */
+})();
 applyTheme();
 document.getElementById('sfxToggle').classList.toggle('on', sfxOn);
 renderAllSongLists();
