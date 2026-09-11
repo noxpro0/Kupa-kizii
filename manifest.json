@@ -2,7 +2,7 @@
   "name": "Kupa Kızı",
   "short_name": "Kupa Kızı",
   "description": "kupa kızı için özel müzik sitesi",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#eafaf5",
